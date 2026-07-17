@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Mission 68 — Daily Tracker</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#14432B">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mission 68">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F4F6F1;
+    --card:#FFFFFF;
+    --ink:#1C2420;
+    --ink-soft:#5A665E;
+    --green:#1E5B3A;
+    --green-deep:#14432B;
+    --marigold:#E9A23B;
+    --marigold-soft:#FBF0DC;
+    --line:#DCE3DA;
+    --danger:#B4552D;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html{font-size:16px}
+  body{
+    font-family:'Instrument Sans',system-ui,sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    min-height:100vh;
+    padding-bottom:90px;
+  }
+  .wrap{max-width:520px;margin:0 auto;padding:0 16px}
+
+  /* ---------- Header / signature touchline ---------- */
+  header{
+    background:var(--green-deep);
+    color:#F2F5EE;
+    padding:20px 0 26px;
+    border-bottom:3px solid var(--marigold);
+  }
+  .hd-top{display:flex;justify-content:space-between;align-items:baseline}
+  .hd-title{
+    font-family:'Bricolage Grotesque',sans-serif;
+    font-weight:800;font-size:1.5rem;letter-spacing:.01em;
+  }
+  .hd-title span{color:var(--marigold)}
+  .hd-date{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:.72rem;color:#B9CCBB;text-align:right;line-height:1.5;
+  }
+  .day-big{
+    font-family:'Bricolage Grotesque',sans-serif;
+    font-weight:800;font-size:2.6rem;line-height:1;margin-top:10px;
+  }
+  .day-big small{
+    font-size:.85rem;font-weight:600;color:#B9CCBB;
+    font-family:'IBM Plex Mono',monospace;margin-left:8px;letter-spacing:.05em;
+  }
+  /* touchline: 87 -> 68 */
+  .touchline{margin-top:18px}
+  .touchline-track{
+    position:relative;height:8px;border-radius:4px;
+    background:rgba(255,255,255,.14);
+  }
+  .touchline-fill{
+    position:absolute;left:0;top:0;bottom:0;
+    background:var(--marigold);border-radius:4px;
+    transition:width .6s cubic-bezier(.2,.8,.2,1);
+  }
+  .touchline-dot{
+    position:absolute;top:50%;transform:translate(-50%,-50%);
+    width:16px;height:16px;border-radius:50%;
+    background:#fff;border:3px solid var(--marigold);
+    transition:left .6s cubic-bezier(.2,.8,.2,1);
+  }
+  .touchline-labels{
+    display:flex;justify-content:space-between;margin-top:8px;
+    font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:#B9CCBB;
+  }
+  .touchline-now{
+    text-align:center;margin-top:6px;
+    font-family:'IBM Plex Mono',monospace;font-size:.8rem;color:#fff;
+  }
+  .touchline-now b{color:var(--marigold);font-weight:600}
+
+  /* ---------- Summary bars ---------- */
+  .summary{
+    margin-top:-14px;position:relative;z-index:2;
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px 16px;box-shadow:0 2px 10px rgba(28,36,32,.06);
+  }
+  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .bar-row:last-child{margin-bottom:0}
+  .bar-label{
+    font-family:'IBM Plex Mono',monospace;font-size:.7rem;
+    color:var(--ink-soft);width:60px;flex-shrink:0;letter-spacing:.03em;
+  }
+  .bar-track{flex:1;height:7px;background:#EDF1EA;border-radius:4px;overflow:hidden}
+  .bar-fill{height:100%;background:var(--green);border-radius:4px;transition:width .4s ease}
+  .bar-fill.gold{background:var(--marigold)}
+  .bar-val{
+    font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:600;
+    width:92px;text-align:right;flex-shrink:0;
+  }
+
+  /* ---------- Sections ---------- */
+  .section{margin-top:22px}
+  .section-head{
+    display:flex;justify-content:space-between;align-items:baseline;
+    margin-bottom:10px;padding:0 2px;
+  }
+  .section-title{
+    font-family:'Bricolage Grotesque',sans-serif;
+    font-weight:600;font-size:1.02rem;
+  }
+  .section-note{
+    font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--ink-soft);
+  }
+
+  /* ---------- Check items ---------- */
+  .card{
+    background:var(--card);border:1px solid var(--line);
+    border-radius:var(--radius);overflow:hidden;
+  }
+  .item{
+    display:flex;align-items:center;gap:12px;
+    padding:13px 14px;border-bottom:1px solid var(--line);
+    cursor:pointer;user-select:none;width:100%;
+    background:none;border-left:none;border-right:none;border-top:none;
+    text-align:left;font-family:inherit;color:inherit;
+  }
+  .item:last-child{border-bottom:none}
+  .item:focus-visible{outline:3px solid var(--marigold);outline-offset:-3px}
+  .chk{
+    width:26px;height:26px;border-radius:8px;flex-shrink:0;
+    border:2px solid #C4CFC4;background:#fff;
+    display:flex;align-items:center;justify-content:center;
+    transition:all .18s ease;
+  }
+  .chk svg{width:15px;height:15px;stroke:#fff;stroke-width:3.2;fill:none;
+    stroke-linecap:round;stroke-linejoin:round;opacity:0;transform:scale(.5);
+    transition:all .18s ease}
+  .item.done .chk{background:var(--green);border-color:var(--green)}
+  .item.done .chk svg{opacity:1;transform:scale(1)}
+  .item-body{flex:1;min-width:0}
+  .item-name{font-weight:600;font-size:.95rem}
+  .item.done .item-name{color:var(--ink-soft);text-decoration:line-through;text-decoration-color:#B7C2B7}
+  .item-sub{font-size:.78rem;color:var(--ink-soft);margin-top:2px;line-height:1.35}
+  .item-macro{
+    font-family:'IBM Plex Mono',monospace;font-size:.7rem;font-weight:500;
+    color:var(--green);flex-shrink:0;text-align:right;line-height:1.5;
+  }
+  .item.done .item-macro{color:#9FAE9F}
+  .item-time{
+    font-family:'IBM Plex Mono',monospace;font-size:.65rem;
+    color:var(--marigold);background:var(--marigold-soft);
+    padding:1px 6px;border-radius:4px;margin-left:6px;font-weight:600;
+  }
+
+  /* ---------- Water ---------- */
+  .water-card{padding:14px 16px}
+  .water-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .water-count{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:.9rem}
+  .water-count b{color:var(--green)}
+  .water-glasses{display:flex;gap:6px;flex-wrap:wrap}
+  .glass{
+    width:32px;height:40px;border-radius:6px 6px 9px 9px;
+    border:2px solid #C4CFC4;background:#fff;cursor:pointer;
+    position:relative;overflow:hidden;transition:border-color .15s;
+    padding:0;
+  }
+  .glass:focus-visible{outline:3px solid var(--marigold);outline-offset:2px}
+  .glass::after{
+    content:'';position:absolute;left:0;right:0;bottom:0;height:0%;
+    background:linear-gradient(180deg,#7FB8D8,#3E86B0);
+    transition:height .25s ease;
+  }
+  .glass.full{border-color:#3E86B0}
+  .glass.full::after{height:100%}
+  .water-btns{display:flex;gap:8px;margin-top:12px}
+  .wbtn{
+    flex:1;padding:9px 0;border-radius:10px;border:1px solid var(--line);
+    background:var(--paper);font-family:'Instrument Sans',sans-serif;
+    font-weight:600;font-size:.85rem;cursor:pointer;color:var(--ink);
+  }
+  .wbtn:focus-visible{outline:3px solid var(--marigold)}
+  .wbtn.primary{background:var(--green);color:#fff;border-color:var(--green)}
+
+  /* ---------- Workout ---------- */
+  .workout-tag{
+    display:inline-block;font-family:'IBM Plex Mono',monospace;
+    font-size:.68rem;font-weight:600;letter-spacing:.06em;
+    padding:2px 8px;border-radius:5px;
+    background:var(--marigold-soft);color:#9A6A1A;
+  }
+  .workout-tag.rest{background:#E8EDE7;color:var(--ink-soft)}
+  details.exlist{border-top:1px solid var(--line)}
+  details.exlist summary{
+    padding:11px 14px;cursor:pointer;font-size:.82rem;font-weight:600;
+    color:var(--green);list-style:none;display:flex;justify-content:space-between;align-items:center;
+  }
+  details.exlist summary::-webkit-details-marker{display:none}
+  details.exlist summary::after{content:'+';font-family:'IBM Plex Mono',monospace;font-size:1rem}
+  details.exlist[open] summary::after{content:'−'}
+  .extable{width:100%;border-collapse:collapse;font-size:.78rem}
+  .extable th{
+    text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.62rem;
+    font-weight:600;letter-spacing:.05em;color:var(--ink-soft);
+    padding:6px 14px;border-top:1px solid var(--line);background:var(--paper);
+  }
+  .extable td{padding:7px 14px;border-top:1px solid var(--line);vertical-align:top}
+  .extable td:last-child,.extable th:last-child{text-align:right;font-family:'IBM Plex Mono',monospace;font-size:.72rem;white-space:nowrap}
+
+  /* ---------- Weight ---------- */
+  .weight-card{padding:16px}
+  .weight-row{display:flex;gap:10px;align-items:center}
+  .weight-input{
+    flex:1;padding:11px 12px;border-radius:10px;border:1.5px solid var(--line);
+    font-family:'IBM Plex Mono',monospace;font-size:1rem;background:var(--paper);
+    color:var(--ink);width:100%;
+  }
+  .weight-input:focus{outline:none;border-color:var(--green)}
+  .weight-save{
+    padding:11px 20px;border-radius:10px;border:none;background:var(--green);
+    color:#fff;font-weight:600;font-family:'Instrument Sans',sans-serif;
+    font-size:.9rem;cursor:pointer;
+  }
+  .weight-save:focus-visible{outline:3px solid var(--marigold)}
+  .weight-msg{font-size:.78rem;color:var(--ink-soft);margin-top:8px}
+  .chart-box{margin-top:14px}
+  .chart-box svg{width:100%;height:auto;display:block}
+  .weight-history{
+    margin-top:10px;font-family:'IBM Plex Mono',monospace;font-size:.72rem;
+    color:var(--ink-soft);line-height:1.7;
+  }
+
+  /* ---------- Streak / footer ---------- */
+  .streak-strip{
+    display:flex;gap:12px;margin-top:22px;
+  }
+  .streak-box{
+    flex:1;background:var(--card);border:1px solid var(--line);
+    border-radius:var(--radius);padding:12px;text-align:center;
+  }
+  .streak-num{
+    font-family:'Bricolage Grotesque',sans-serif;font-weight:800;
+    font-size:1.6rem;color:var(--green);
+  }
+  .streak-lbl{
+    font-family:'IBM Plex Mono',monospace;font-size:.62rem;
+    color:var(--ink-soft);letter-spacing:.05em;margin-top:2px;
+  }
+  .rules{
+    margin-top:22px;background:var(--green-deep);color:#D8E4D6;
+    border-radius:var(--radius);padding:16px;font-size:.8rem;line-height:1.65;
+  }
+  .rules b{color:var(--marigold);font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.08em}
+  footer{
+    text-align:center;margin-top:26px;
+    font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:#9FAE9F;
+    line-height:1.7;
+  }
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+    background:var(--ink);color:#fff;padding:10px 20px;border-radius:99px;
+    font-size:.85rem;font-weight:500;opacity:0;transition:all .3s ease;
+    pointer-events:none;z-index:50;white-space:nowrap;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* ---------- Tabs & pages ---------- */
+  .page{display:none}
+  .page.active{display:block}
+  .tabbar{
+    position:fixed;bottom:0;left:0;right:0;z-index:40;
+    background:var(--card);border-top:1px solid var(--line);
+    display:flex;justify-content:center;gap:6px;
+    padding:6px 10px calc(8px + env(safe-area-inset-bottom));
+  }
+  .tab{
+    flex:1;max-width:165px;padding:10px 0;border:none;background:none;
+    font-family:'Instrument Sans',sans-serif;font-weight:600;font-size:.84rem;
+    color:var(--ink-soft);cursor:pointer;border-radius:10px;
+  }
+  .tab.active{color:var(--green);background:#EAF1EA}
+  .tab:focus-visible{outline:3px solid var(--marigold)}
+
+  .page-h{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.3rem;margin:20px 2px 4px}
+  .page-sub{font-size:.8rem;color:var(--ink-soft);margin:0 2px 14px}
+  .ref-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-bottom:14px}
+  .ref-title{
+    padding:11px 14px;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:.95rem;
+    border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline;gap:8px;
+  }
+  .ref-title .item-macro{font-size:.66rem;text-align:right}
+  .reftable{width:100%;border-collapse:collapse;font-size:.78rem}
+  .reftable th{
+    text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:600;
+    letter-spacing:.05em;color:var(--ink-soft);padding:6px 14px;background:var(--paper);
+  }
+  .reftable td{padding:7px 14px;border-top:1px solid var(--line);vertical-align:top}
+  .reftable td:last-child,.reftable th:last-child{text-align:right;font-family:'IBM Plex Mono',monospace;font-size:.7rem;white-space:nowrap}
+  .reftable tr.total td{font-weight:600;background:var(--marigold-soft)}
+  .ref-note{padding:10px 14px;font-size:.76rem;color:var(--ink-soft);line-height:1.55;border-top:1px solid var(--line)}
+
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{transition:none!important;animation:none!important}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="hd-top">
+      <div class="hd-title">MISSION <span>68</span></div>
+      <div class="hd-date" id="hdDate"></div>
+    </div>
+    <div class="day-big" id="dayBig">DAY —</div>
+    <div class="touchline">
+      <div class="touchline-track">
+        <div class="touchline-fill" id="tlFill" style="width:0%"></div>
+        <div class="touchline-dot" id="tlDot" style="left:0%"></div>
+      </div>
+      <div class="touchline-labels"><span>87 kg</span><span>77.5</span><span>68 kg</span></div>
+      <div class="touchline-now" id="tlNow">Log your first weigh-in below</div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap page active" id="page-today">
+
+  <!-- Summary -->
+  <div class="summary" id="summary">
+    <div class="bar-row">
+      <div class="bar-label">KCAL</div>
+      <div class="bar-track"><div class="bar-fill" id="kcalBar" style="width:0%"></div></div>
+      <div class="bar-val" id="kcalVal">0 / 1640</div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">PROTEIN</div>
+      <div class="bar-track"><div class="bar-fill gold" id="protBar" style="width:0%"></div></div>
+      <div class="bar-val" id="protVal">0 / 88 g</div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">DAY</div>
+      <div class="bar-track"><div class="bar-fill" id="dayBar" style="width:0%"></div></div>
+      <div class="bar-val" id="dayVal">0 / 10 ✓</div>
+    </div>
+    <div id="actRow" style="margin-top:11px;padding-top:10px;border-top:1px dashed var(--line);display:flex;justify-content:space-between;align-items:baseline">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--ink-soft);letter-spacing:.03em">ACTIVITY (EST.)</span>
+      <span id="actVal" style="font-family:'IBM Plex Mono',monospace;font-size:.74rem;font-weight:600;color:var(--green)">—</span>
+    </div>
+    <div style="font-size:.66rem;color:#9FAE9F;margin-top:3px;text-align:right">informational only — not deducted from your food target</div>
+  </div>
+
+  <!-- Meals -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title">Meals</div>
+      <div class="section-note" id="mealNote">~1,640 kcal · ~88 g protein</div>
+    </div>
+    <div class="card" id="mealList"></div>
+  </div>
+
+  <!-- Water -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title">Water</div>
+      <div class="section-note">target 3 L · 12 × 250 ml</div>
+    </div>
+    <div class="card water-card">
+      <div class="water-top">
+        <div class="water-count"><b id="waterL">0.0 L</b> <span style="color:var(--ink-soft)">/ 3.0 L</span></div>
+        <div class="section-note" id="waterHint">tap a glass</div>
+      </div>
+      <div class="water-glasses" id="glasses"></div>
+      <div class="water-btns">
+        <button class="wbtn primary" id="waterPlus" type="button">+ 1 glass</button>
+        <button class="wbtn" id="waterMinus" type="button">− undo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Movement -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title">Movement</div>
+      <div class="section-note" id="movNote"></div>
+    </div>
+    <div class="card" id="moveList"></div>
+  </div>
+
+  <!-- Weight -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title">Weigh-in</div>
+      <div class="section-note">weekly · same time &amp; conditions</div>
+    </div>
+    <div class="card weight-card">
+      <div class="weight-row">
+        <input class="weight-input" id="wInput" type="number" step="0.1" min="50" max="120" inputmode="decimal" placeholder="e.g. 86.4" aria-label="Body weight in kilograms">
+        <button class="weight-save" id="wSave" type="button">Log</button>
+      </div>
+      <div class="weight-msg" id="wMsg">Judge by the multi-week trend, never a single day.</div>
+      <div class="chart-box" id="chartBox" hidden>
+        <svg id="chart" viewBox="0 0 320 140" role="img" aria-label="Weight trend chart"></svg>
+      </div>
+      <div class="weight-history" id="wHist"></div>
+    </div>
+  </div>
+
+  <!-- Streaks -->
+  <div class="streak-strip">
+    <div class="streak-box"><div class="streak-num" id="stToday">0%</div><div class="streak-lbl">TODAY</div></div>
+    <div class="streak-box"><div class="streak-num" id="stStreak">0</div><div class="streak-lbl">DAY STREAK ≥80%</div></div>
+    <div class="streak-box"><div class="streak-num" id="stLogged">0</div><div class="streak-lbl">DAYS LOGGED</div></div>
+  </div>
+
+  <!-- Rules -->
+  <div class="rules">
+    <b>STANDING ORDERS</b><br>
+    Drain the oily jhol — take solids, leave gravy. No sugar, cold drinks, or muri–telebhaja window. Dinner done by 8:30 PM. Chicken 3–4 nights/week; egg + paneer on others. Salad is unlimited. Scale may stall in weeks 1–2 from new training — that's water, not fat.
+  </div>
+
+  <footer>
+    MISSION 68 · 87 → 68 KG · ~9 MONTHS<br>
+    protein target as approved by your doctor
+  </footer>
+</div>
+
+<!-- ================= DIET PAGE ================= -->
+<div class="wrap page" id="page-diet">
+  <div class="page-h">Diet Chart</div>
+  <div class="page-sub">~1,640 kcal · ~88 g protein · cooked weights unless noted</div>
+
+  <div class="ref-card">
+    <div class="ref-title">Breakfast <span class="item-macro">8–9 AM · 339 kcal · 25 g P</span></div>
+    <table class="reftable">
+      <tr><th>ITEM</th><th>QTY</th><th>KCAL · P</th></tr>
+      <tr><td>Boiled eggs (whole)</td><td>2</td><td>155 · 13 g</td></tr>
+      <tr><td>Egg whites (boiled)</td><td>2</td><td>34 · 7 g</td></tr>
+      <tr><td>Roti, no oil/ghee</td><td>1 (~55 g)</td><td>105 · 3.5 g</td></tr>
+      <tr><td>Salad: cucumber ½ · onion ½ · carrot ½ · tomato ½ + lemon, pepper, bit noon</td><td>~150 g</td><td>45 · 1.5 g</td></tr>
+    </table>
+    <div class="ref-note">Roti swaps (rough parity): daliya 150 g cooked · oats 30 g dry · brown bread 2 slices. Boil 4 eggs at once — 2 whole + 2 whites for you.</div>
+  </div>
+
+  <div class="ref-card">
+    <div class="ref-title">Mid-morning <span class="item-macro">11 AM · 70 kcal · 2.5 g P</span></div>
+    <table class="reftable">
+      <tr><th>ITEM</th><th>QTY</th><th>KCAL · P</th></tr>
+      <tr><td>Guava, with skin (washed)</td><td>1 medium (~120 g)</td><td>70 · 2.5 g</td></tr>
+    </table>
+    <div class="ref-note">Backups: papaya 150 g (65) · orange (65) · watermelon 200 g (60). Not daily: banana, mango. Never: juice.</div>
+  </div>
+
+  <div class="ref-card">
+    <div class="ref-title">Lunch <span class="item-macro">1–2 PM · ~545 kcal · 24.5 g P</span></div>
+    <table class="reftable">
+      <tr><th>ITEM</th><th>QTY</th><th>KCAL · P</th></tr>
+      <tr><td>Rice, cooked</td><td>150 g</td><td>195 · 4 g</td></tr>
+      <tr><td>Dal (masoor/moong)</td><td>150 ml bowl</td><td>~125 · 7 g</td></tr>
+      <tr><td>Vegetable torkari, mostly solids</td><td>~150 g bowl</td><td>~125 · 2 g</td></tr>
+      <tr><td>Rohu/katla jhol</td><td>1 pc (60 g raw)</td><td>~125 · 10 g</td></tr>
+      <tr><td>Salad (same mix)</td><td>~150 g</td><td>45 · 1.5 g</td></tr>
+    </table>
+    <div class="ref-note">No-dal days: take 2 fish pieces instead (~same kcal, protein +10 g). Serve fish &amp; torkari with a slotted spoon — solids in, oily jhol stays in the pot.</div>
+  </div>
+
+  <div class="ref-card">
+    <div class="ref-title">Evening <span class="item-macro">5–6 PM · 130 kcal · 8 g P</span></div>
+    <table class="reftable">
+      <tr><th>ITEM</th><th>QTY</th><th>KCAL · P</th></tr>
+      <tr><td>Amul Masti Dahi, unsweetened (per pack: 65 kcal, 4 g P / 100 g)</td><td>200 g cup</td><td>130 · 8 g</td></tr>
+    </table>
+    <div class="ref-note">This slot exists to kill the muri–chanachur–telebhaja window. Have it ready before 5 PM hunger, not after.</div>
+  </div>
+
+  <div class="ref-card">
+    <div class="ref-title">Dinner <span class="item-macro">by 8:30 PM · ~485 kcal · 25.5 g P</span></div>
+    <table class="reftable">
+      <tr><th>ITEM</th><th>QTY</th><th>KCAL · P</th></tr>
+      <tr><td>Rice, cooked</td><td>150 g</td><td>195 · 4 g</td></tr>
+      <tr><td>Vegetable torkari (different from lunch)</td><td>~150 g bowl</td><td>~80 · 2 g</td></tr>
+      <tr><td>Chicken jhol, skinless</td><td>100 g raw (~2 pc)</td><td>~165 · 20 g</td></tr>
+      <tr><td>Salad (same mix)</td><td>~150 g</td><td>45 · 1.5 g</td></tr>
+    </table>
+    <div class="ref-note">Chicken 3–4 nights/week. Other nights: 1 boiled egg + 30 g paneer instead (~same kcal). Mutton, organ meats, dried fish: off the menu (uric acid).</div>
+  </div>
+
+  <div class="ref-card">
+    <div class="ref-title">Day total</div>
+    <table class="reftable">
+      <tr><th>&nbsp;</th><th>KCAL</th><th>PROTEIN</th></tr>
+      <tr class="total"><td>All 5 meals</td><td>~1,640</td><td>~88 g</td></tr>
+    </table>
+    <div class="ref-note">Carbs ~190 g · Fat ~55 g · budgeted oil ~6 tsp/day across dishes. Water 3 L+. No sugar, no cold drinks. Salad is unlimited — refill freely; extra rice is not.</div>
+  </div>
+</div>
+
+<!-- ================= EXERCISE PAGE ================= -->
+<div class="wrap page" id="page-plan">
+  <div class="page-h">Exercise Plan</div>
+  <div class="page-sub">Walk daily · strength 3×/week · mobility every day</div>
+
+  <div class="ref-card">
+    <div class="ref-title">Weekly schedule</div>
+    <table class="reftable">
+      <tr><th>DAY</th><th>WALK</th><th>STRENGTH</th></tr>
+      <tr><td>Mon</td><td>45–60 min brisk</td><td>Rest</td></tr>
+      <tr><td>Tue</td><td>30–45 min brisk</td><td>Workout</td></tr>
+      <tr><td>Wed</td><td>45–60 min brisk</td><td>Rest</td></tr>
+      <tr><td>Thu</td><td>30–45 min brisk</td><td>Workout</td></tr>
+      <tr><td>Fri</td><td>45–60 min brisk</td><td>Rest</td></tr>
+      <tr><td>Sat</td><td>30–45 min brisk</td><td>Workout</td></tr>
+      <tr><td>Sun</td><td>30 min relaxed</td><td>Mobility only</td></tr>
+    </table>
+    <div class="ref-note">Rotation: odd weeks A–B–A, even weeks B–A–B — the Today page picks the right one automatically. Plus a 10–15 min easy walk after dinner, every night. Missed a session? Do the next scheduled one; never stack two back-to-back.</div>
+  </div>
+
+  <div class="ref-card" id="planWarm"></div>
+  <div class="ref-card" id="planA"></div>
+  <div class="ref-card" id="planB"></div>
+  <div class="ref-card" id="planMob"></div>
+
+  <div class="ref-card">
+    <div class="ref-title">Effort &amp; progression rules</div>
+    <table class="reftable">
+      <tr><th>RULE</th><th style="text-align:right">VALUE</th></tr>
+      <tr><td>Rest between sets — compound lifts</td><td>60–90 s</td></tr>
+      <tr><td>Rest — calves, curls, core</td><td>45–60 s</td></tr>
+      <tr><td>Stop each set with reps in the tank</td><td>2–3</td></tr>
+      <tr><td>Session length incl. warm-up</td><td>30–40 min</td></tr>
+      <tr><td>Extra water around each session</td><td>+500 ml</td></tr>
+    </table>
+    <div class="ref-note">Month 1: progress by reps and technique, not load — e.g. goblet squat 3×8 → 3×12 with clean form before anything gets heavier. Pain (not normal effort) = stop that movement and reassess. Weeks 1–2 the scale may stall from water retention in new muscle — normal, keep going.</div>
+  </div>
+</div>
+
+<nav class="tabbar" aria-label="Pages">
+  <button class="tab active" data-page="today" type="button">Today</button>
+  <button class="tab" data-page="diet" type="button">Diet</button>
+  <button class="tab" data-page="plan" type="button">Exercise</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- data ---------------- */
+  const MEALS = [
+    {id:"bf",  name:"Breakfast", time:"8–9 AM",  sub:"2 boiled eggs + 2 whites + 1 roti + salad", kcal:339, p:25},
+    {id:"gv",  name:"Guava",     time:"11 AM",   sub:"1 medium, with skin", kcal:70,  p:2.5},
+    {id:"ln",  name:"Lunch",     time:"1–2 PM",  sub:"Rice 150g + dal + fish (1 pc) + torkari + salad", kcal:545, p:24.5},
+    {id:"dh",  name:"Dahi",      time:"5–6 PM",  sub:"Amul Masti 200g, unsweetened", kcal:130, p:8},
+    {id:"dn",  name:"Dinner",    time:"by 8:30", sub:"Rice 150g + torkari + chicken 100g (or egg+paneer) + salad", kcal:485, p:25.5}
+  ];
+  const KCAL_TARGET = 1640, PROT_TARGET = 88;
+
+  const WORKOUT_A = [
+    ["Goblet Squat","1 DB · 9.1 kg","3 × 8–12"],
+    ["DB Floor Press","2 DB · 18.2 kg tot","3 × 6–10"],
+    ["One-arm DB Row","1 DB · 9.1 kg","3 × 8–12 ea"],
+    ["DB Romanian Deadlift","2 DB · 18.2 kg tot","3 × 8–12"],
+    ["Standing Calf Raise","2 DB · 18.2 kg tot","3 × 12–20"],
+    ["Bird-dog","bodyweight","2 × 8–10 ea"],
+    ["Plank","bodyweight","2 × 20–45 s"]
+  ];
+  const WORKOUT_B = [
+    ["Reverse Lunge","bodyweight","3 × 8 ea leg"],
+    ["Barbell Overhead Press","bar · 9.1 kg","3 × 6–10"],
+    ["Barbell Bent-over Row","bar · 9.1 kg","3 × 10–15"],
+    ["Barbell Glute Bridge","bar · 9.1 kg","3 × 12–15"],
+    ["Barbell Biceps Curl","bar · 9.1 kg","2 × 8–12"],
+    ["Calf Raise","2 DB · 18.2 kg tot","3 × 12–20"],
+    ["Dead Bug","bodyweight","2 × 8–10 ea side"]
+  ];
+  const MOBILITY = [
+    ["Cat-cow","—","10 slow reps"],
+    ["Hamstring stretch","—","30 s / side"],
+    ["Hip-flexor stretch","—","30 s / side"],
+    ["Doorway chest stretch","—","30 s"],
+    ["Child's pose","—","30–45 s"],
+    ["Shoulder circles","—","30 s"]
+  ];
+  const WARMUP = [
+    ["March in place / easy walk","—","2 min"],
+    ["Arm circles","—","30 s"],
+    ["Half-depth squats (no load)","—","× 10"],
+    ["Hip circles","—","10 ea way"],
+    ["Scapular wall slides","—","× 8"]
+  ];
+
+  /* ---------------- state & storage ---------------- */
+  const KEY = "mission68-state";
+  let state = { startDate:null, days:{}, weights:[] };
+  let persisted = true;
+
+  /* storage adapter: artifact storage -> browser localStorage -> memory only */
+  const store = {
+    async get(){
+      try{
+        if(typeof window.storage !== "undefined" && window.storage && window.storage.get){
+          const r = await window.storage.get(KEY);
+          return (r && r.value) ? r.value : null;
+        }
+      }catch(e){ /* key missing or unavailable */ }
+      try{ return localStorage.getItem(KEY); }catch(e){}
+      return null;
+    },
+    async set(val){
+      try{
+        if(typeof window.storage !== "undefined" && window.storage && window.storage.set){
+          const r = await window.storage.set(KEY, val);
+          if(r) return true;
+        }
+      }catch(e){}
+      try{ localStorage.setItem(KEY, val); return true; }catch(e){}
+      return false;
+    }
+  };
+
+  async function load(){
+    try{
+      const raw = await store.get();
+      if(raw){
+        try{
+          const parsed = JSON.parse(raw);
+          if(parsed && typeof parsed === "object"){
+            state = Object.assign({startDate:null, days:{}, weights:[]}, parsed);
+          }
+        }catch(e){}
+      }
+    }catch(e){}
+    if(!state.startDate){ state.startDate = todayKey(); save(); }
+  }
+  let saveTimer=null;
+  async function save(){
+    try{ persisted = await store.set(JSON.stringify(state)); }
+    catch(e){ persisted = false; }
+  }
+  function saveSoon(){ clearTimeout(saveTimer); saveTimer=setTimeout(save,400); }
+
+  /* ---------------- date helpers ---------------- */
+  function todayKey(d){
+    d = d || new Date();
+    const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), dd=String(d.getDate()).padStart(2,"0");
+    return y+"-"+m+"-"+dd;
+  }
+  function dayNumber(){
+    const s = new Date(state.startDate+"T00:00:00");
+    const n = new Date(todayKey()+"T00:00:00");
+    return Math.floor((n-s)/86400000)+1;
+  }
+  function weekNumber(){ return Math.floor((dayNumber()-1)/7)+1; }
+
+  function todayEntry(){
+    const k = todayKey();
+    if(!state.days[k]) state.days[k] = {checks:{}, water:0};
+    return state.days[k];
+  }
+
+  /* schedule: 0=Sun..6=Sat */
+  function scheduleFor(dow){
+    const wk = weekNumber();
+    const odd = wk % 2 === 1;                 /* wk1: A-B-A, wk2: B-A-B */
+    const map = {
+      1:{walk:"45–60 min brisk walk", type:"rest"},
+      2:{walk:"30–45 min brisk walk", type:"strength", letter: odd?"A":"B"},
+      3:{walk:"45–60 min brisk walk", type:"rest"},
+      4:{walk:"30–45 min brisk walk", type:"strength", letter: odd?"B":"A"},
+      5:{walk:"45–60 min brisk walk", type:"rest"},
+      6:{walk:"30–45 min brisk walk", type:"strength", letter: odd?"A":"B"},
+      0:{walk:"30 min relaxed walk",  type:"mobilityDay"}
+    };
+    return map[dow];
+  }
+
+  /* ---------------- rendering ---------------- */
+  const $ = id => document.getElementById(id);
+  const CHECK_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="4 12.5 10 18.5 20 6.5"/></svg>';
+
+  function fmtHeaderDate(){
+    const d=new Date();
+    const days=["SUN","MON","TUE","WED","THU","FRI","SAT"];
+    const mos=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+    return days[d.getDay()]+" · "+String(d.getDate()).padStart(2,"0")+" "+mos[d.getMonth()]+" "+d.getFullYear()+"<br>WEEK "+weekNumber();
+  }
+
+  function itemButton(id,name,time,sub,macroHtml,checked){
+    return '<button type="button" class="item'+(checked?" done":"")+'" data-chk="'+id+'">'
+      +'<span class="chk">'+CHECK_SVG+'</span>'
+      +'<span class="item-body"><span class="item-name">'+name+'</span>'
+      +(time?'<span class="item-time">'+time+'</span>':'')
+      +'<div class="item-sub">'+sub+'</div></span>'
+      +(macroHtml?'<span class="item-macro">'+macroHtml+'</span>':'')
+      +'</button>';
+  }
+
+  function renderMeals(){
+    const e = todayEntry();
+    $("mealList").innerHTML = MEALS.map(m =>
+      itemButton(m.id, m.name, m.time, m.sub, m.kcal+" kcal<br>"+m.p+" g P", !!e.checks[m.id])
+    ).join("");
+  }
+
+  function exTableHTML(title, rows){
+    return '<details class="exlist"><summary>'+title+'</summary><table class="extable">'
+      +'<tr><th>EXERCISE</th><th>LOAD</th><th>SETS × REPS</th></tr>'
+      + rows.map(r=>'<tr><td>'+r[0]+'</td><td style="color:var(--ink-soft)">'+r[1]+'</td><td>'+r[2]+'</td></tr>').join("")
+      +'</table></details>';
+  }
+
+  function effectiveSch(e, dow){
+    const sch = scheduleFor(dow);
+    if(sch.type!=="strength" && e && e.ovr){
+      return {walk:sch.walk, type:"strength", letter:e.ovr, override:true, base:sch.type};
+    }
+    return sch;
+  }
+
+  function renderMovement(){
+    const e = todayEntry();
+    const dow = new Date().getDay();
+    const sch = effectiveSch(e, dow);
+    let html = "";
+
+    html += itemButton("walk","Main walk","", sch.walk, "", !!e.checks.walk);
+
+    if(sch.type==="strength"){
+      const rows = sch.letter==="A"?WORKOUT_A:WORKOUT_B;
+      const done = (e.checks.wu?1:0) + rows.filter((_,i)=>e.checks["ex"+i]).length;
+      $("movNote").innerHTML = 'today: <span class="workout-tag">WORKOUT '+sch.letter+(sch.override?' · EXTRA':'')+'</span> '
+        +'<span style="font-family:\'IBM Plex Mono\',monospace;font-size:.68rem;color:var(--ink-soft)">'+done+'/'+(rows.length+1)+'</span>';
+      html += itemButton("wu","Warm-up (5 min)","","March 2 min · arm circles · 10 half-squats · hip circles · wall slides","", !!e.checks.wu);
+      rows.forEach(function(r,i){
+        html += itemButton("ex"+i, r[0], "", r[1], r[2], !!e.checks["ex"+i]);
+      });
+    } else if(sch.type==="mobilityDay"){
+      $("movNote").innerHTML = 'today: <span class="workout-tag rest">RECOVERY</span>';
+    } else {
+      $("movNote").innerHTML = 'today: <span class="workout-tag rest">REST — WALK ONLY</span>';
+    }
+
+    html += itemButton("mob","Mobility / stretching","", dow===0 ? "Extended session · 10–15 min" : "Daily routine · 5–8 min","", !!e.checks.mob);
+    html += itemButton("pdw","After-dinner walk","","10–15 min easy — helps reflux too","", !!e.checks.pdw);
+
+    /* override controls */
+    let ctrl = "";
+    if(sch.type!=="strength"){
+      ctrl = '<div style="padding:12px 14px;border-top:1px solid var(--line)">'
+        +'<div style="font-size:.78rem;color:var(--ink-soft);margin-bottom:8px">Training today anyway? Load a session to track it:</div>'
+        +'<div class="water-btns" style="margin-top:0">'
+        +'<button class="wbtn" type="button" data-ovr="A">Workout A</button>'
+        +'<button class="wbtn" type="button" data-ovr="B">Workout B</button>'
+        +'</div></div>';
+    } else if(sch.override){
+      ctrl = '<div style="padding:10px 14px;border-top:1px solid var(--line)">'
+        +'<button class="wbtn" type="button" data-ovr="clear" style="width:100%">Remove extra session (back to rest day)</button>'
+        +'</div>';
+    }
+
+    $("moveList").innerHTML = html + ctrl + exTableHTML("Mobility routine", MOBILITY);
+  }
+
+  function syncWorkout(e){
+    const sch = effectiveSch(e, new Date().getDay());
+    if(sch.type!=="strength") return;
+    const rows = sch.letter==="A"?WORKOUT_A:WORKOUT_B;
+    e.checks.wo = !!e.checks.wu && rows.every(function(_,i){ return !!e.checks["ex"+i]; });
+  }
+
+  function renderWater(){
+    const e = todayEntry();
+    let g = "";
+    for(let i=0;i<12;i++){
+      g += '<button type="button" class="glass'+(i < e.water ? " full":"")+'" data-glass="'+i+'" aria-label="Glass '+(i+1)+'"></button>';
+    }
+    $("glasses").innerHTML = g;
+    $("waterL").textContent = (e.water*0.25).toFixed(2).replace(/0$/,"")+" L";
+    $("waterHint").textContent = e.water>=12 ? "target hit ✓" : (12-e.water)+" glasses to go";
+  }
+
+  function movementIdsToday(){
+    const sch = scheduleFor(new Date().getDay());
+    const ids = ["walk","mob","pdw"];
+    if(sch.type==="strength") ids.push("wo");
+    return ids;
+  }
+
+  function dayScore(entry, dateStr){
+    /* meals 5 + movement (3 or 4) + water counts as 1 when >=12 */
+    const d = new Date(dateStr+"T00:00:00");
+    const sch = scheduleFor(d.getDay());
+    const ids = ["bf","gv","ln","dh","dn","walk","mob","pdw"];
+    if(sch.type==="strength" || entry.ovr) ids.push("wo");
+    let done = ids.filter(i=>entry.checks && entry.checks[i]).length;
+    if(entry.water>=12) done += 1;
+    return {done, total: ids.length+1};
+  }
+
+  function renderSummary(){
+    const e = todayEntry();
+    let kcal=0, prot=0;
+    MEALS.forEach(m=>{ if(e.checks[m.id]){kcal+=m.kcal; prot+=m.p;} });
+    $("kcalBar").style.width = Math.min(100, kcal/KCAL_TARGET*100)+"%";
+    $("kcalVal").textContent = Math.round(kcal)+" / "+KCAL_TARGET;
+    $("protBar").style.width = Math.min(100, prot/PROT_TARGET*100)+"%";
+    $("protVal").textContent = (Math.round(prot*10)/10)+" / "+PROT_TARGET+" g";
+
+    const sc = dayScore(e, todayKey());
+    $("dayBar").style.width = (sc.done/sc.total*100)+"%";
+    $("dayVal").textContent = sc.done+" / "+sc.total+" ✓";
+    $("stToday").textContent = Math.round(sc.done/sc.total*100)+"%";
+
+    /* activity estimate — informational only, never deducted */
+    (function(){
+      const dow = new Date().getDay();
+      const sch = effectiveSch(e, dow);
+      const kg = state.weights.length ? state.weights[state.weights.length-1].kg : 87;
+      const scale = kg/87;             /* burns shrink as you do */
+      let lo=0, hi=0, parts=[];
+      if(e.checks.walk){
+        if(dow===0){ lo+=90; hi+=140; } 
+        else if(sch.type==="strength"){ lo+=170; hi+=260; }  /* 30–45 min days */
+        else { lo+=250; hi+=360; }                            /* 45–60 min days */
+        parts.push("walk");
+      }
+      if(e.checks.wo){ lo+=120; hi+=180; parts.push("workout"); }
+      if(e.checks.pdw){ lo+=40; hi+=60; parts.push("evening walk"); }
+      lo=Math.round(lo*scale); hi=Math.round(hi*scale);
+      $("actVal").textContent = (lo===0) ? "— nothing logged yet" : "~"+lo+"–"+hi+" kcal · "+parts.join(" + ");
+    })();
+
+    /* streak: consecutive days (ending today or yesterday) with >=80% */
+    let streak=0;
+    for(let i=0;i<400;i++){
+      const d=new Date(); d.setDate(d.getDate()-i);
+      const k=todayKey(d);
+      const en=state.days[k];
+      if(!en){ if(i===0) continue; break; }
+      const s=dayScore(en,k);
+      if(s.done/s.total>=0.8) streak++;
+      else { if(i===0) continue; break; }
+    }
+    $("stStreak").textContent = streak;
+    $("stLogged").textContent = Object.keys(state.days).length;
+  }
+
+  function renderHeader(){
+    $("hdDate").innerHTML = fmtHeaderDate();
+    $("dayBig").innerHTML = "DAY "+String(dayNumber()).padStart(3,"0")+"<small>OF ~270</small>";
+    renderTouchline();
+  }
+
+  function renderTouchline(){
+    const start=87, goal=68, span=start-goal;
+    let cur = state.weights.length ? state.weights[state.weights.length-1].kg : null;
+    let pct = cur===null ? 0 : Math.max(0, Math.min(100, (start-cur)/span*100));
+    $("tlFill").style.width = pct+"%";
+    $("tlDot").style.left = pct+"%";
+    $("tlNow").innerHTML = cur===null
+      ? "Log your first weigh-in below"
+      : "now <b>"+cur.toFixed(1)+" kg</b> · "+ (cur-goal>0 ? (cur-goal).toFixed(1)+" kg to go" : "TARGET REACHED 🏆");
+  }
+
+  function renderWeight(){
+    const hist = state.weights;
+    if(!hist.length){ $("chartBox").hidden=true; $("wHist").textContent=""; return; }
+    $("chartBox").hidden=false;
+
+    const W=320,H=140,padL=34,padR=10,padT=12,padB=22;
+    const minY=66, maxY=88;
+    const xs = hist.length===1 ? [ (padL+W-padR)/2 ] :
+      hist.map((_,i)=> padL + i*(W-padL-padR)/(hist.length-1));
+    const y = kg => padT + (maxY-kg)/(maxY-minY)*(H-padT-padB);
+
+    let grid="";
+    [68,75,80,87].forEach(v=>{
+      grid += '<line x1="'+padL+'" y1="'+y(v)+'" x2="'+(W-padR)+'" y2="'+y(v)+'" stroke="#E3E9E1" stroke-width="1"/>'
+            + '<text x="'+(padL-6)+'" y="'+(y(v)+3)+'" font-size="8" fill="#8A968C" text-anchor="end" font-family="monospace">'+v+'</text>';
+    });
+    /* goal line */
+    grid += '<line x1="'+padL+'" y1="'+y(68)+'" x2="'+(W-padR)+'" y2="'+y(68)+'" stroke="#E9A23B" stroke-width="1.5" stroke-dasharray="4 3"/>';
+
+    let path="";
+    hist.forEach((h,i)=>{ path += (i===0?"M":"L") + xs[i].toFixed(1) + " " + y(h.kg).toFixed(1) + " "; });
+    let dots = hist.map((h,i)=>'<circle cx="'+xs[i].toFixed(1)+'" cy="'+y(h.kg).toFixed(1)+'" r="3.5" fill="#1E5B3A"/>').join("");
+
+    $("chart").innerHTML = grid
+      + (hist.length>1 ? '<path d="'+path+'" fill="none" stroke="#1E5B3A" stroke-width="2" stroke-linejoin="round"/>' : "")
+      + dots;
+
+    $("wHist").innerHTML = hist.slice(-5).reverse()
+      .map(h=>h.date+" — "+h.kg.toFixed(1)+" kg").join("<br>");
+  }
+
+  /* ---------------- interactions ---------------- */
+  function toast(msg){
+    const t=$("toast");
+    t.textContent=msg; t.classList.add("show");
+    clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),1800);
+  }
+
+  document.addEventListener("click", function(ev){
+    const chkBtn = ev.target.closest("[data-chk]");
+    if(chkBtn){
+      const id = chkBtn.getAttribute("data-chk");
+      const e = todayEntry();
+      e.checks[id] = !e.checks[id];
+      if(id==="wu" || id.indexOf("ex")===0){
+        const was = !!e.checks.wo;
+        syncWorkout(e);
+        if(!was && e.checks.wo) toast("Workout complete ✓");
+      }
+      saveSoon();
+      renderMeals(); renderMovement(); renderSummary();
+      if(e.checks[id]){
+        const allMeals = MEALS.every(m=>e.checks[m.id]);
+        const allMove = movementIdsToday().every(i=>e.checks[i]);
+        if(allMeals && MEALS.some(m=>m.id===id)) toast("All meals done — diet locked in ✓");
+        else if(allMove && ["walk","wo","mob","pdw"].includes(id)) toast("Movement complete for today ✓");
+      }
+      return;
+    }
+    const ovrBtn = ev.target.closest("[data-ovr]");
+    if(ovrBtn){
+      const v = ovrBtn.getAttribute("data-ovr");
+      const e = todayEntry();
+      if(v==="clear"){
+        e.ovr = null;
+        e.checks.wo = false; e.checks.wu = false;
+        for(let i=0;i<8;i++) delete e.checks["ex"+i];
+      } else {
+        e.ovr = v;
+        toast("Workout "+v+" loaded for today");
+      }
+      saveSoon();
+      renderMovement(); renderSummary();
+      return;
+    }
+    const glass = ev.target.closest("[data-glass]");
+    if(glass){
+      const i = parseInt(glass.getAttribute("data-glass"),10);
+      const e = todayEntry();
+      e.water = (i < e.water) ? i : i+1;   /* tap filled glass to set level, empty to fill up to it */
+      saveSoon(); renderWater(); renderSummary();
+      if(e.water===12) toast("3 litres done ✓");
+      return;
+    }
+  });
+
+  $("waterPlus").addEventListener("click", ()=>{
+    const e=todayEntry();
+    if(e.water<12){ e.water++; saveSoon(); renderWater(); renderSummary();
+      if(e.water===12) toast("3 litres done ✓"); }
+  });
+  $("waterMinus").addEventListener("click", ()=>{
+    const e=todayEntry();
+    if(e.water>0){ e.water--; saveSoon(); renderWater(); renderSummary(); }
+  });
+
+  $("wSave").addEventListener("click", async ()=>{
+    const v = parseFloat($("wInput").value);
+    if(isNaN(v) || v<50 || v>120){ $("wMsg").textContent="Enter a weight between 50 and 120 kg."; return; }
+    const k = todayKey();
+    const existing = state.weights.find(w=>w.date===k);
+    if(existing) existing.kg = v; else state.weights.push({date:k, kg:v});
+    state.weights.sort((a,b)=>a.date<b.date?-1:1);
+    $("wInput").value="";
+    $("wMsg").textContent = "Logged "+v.toFixed(1)+" kg for today.";
+    await save();
+    renderTouchline(); renderWeight();
+    toast("Weigh-in logged ✓");
+  });
+
+  /* ---------------- boot ---------------- */
+  function fullTable(rows){
+    return '<table class="reftable"><tr><th>EXERCISE</th><th>LOAD</th><th>SETS × REPS</th></tr>'
+      + rows.map(function(r){
+          return '<tr><td>'+r[0]+'</td><td style="color:var(--ink-soft)">'+r[1]+'</td><td>'+r[2]+'</td></tr>';
+        }).join("")
+      + '</table>';
+  }
+  function buildPlan(){
+    $("planWarm").innerHTML = '<div class="ref-title">Warm-up — before every A/B session</div>'+fullTable(WARMUP);
+    $("planA").innerHTML = '<div class="ref-title">Workout A</div>'+fullTable(WORKOUT_A)
+      +'<div class="ref-note">If two dumbbells are too heavy for floor press, use the 20-lb barbell instead.</div>';
+    $("planB").innerHTML = '<div class="ref-title">Workout B</div>'+fullTable(WORKOUT_B);
+    $("planMob").innerHTML = '<div class="ref-title">Daily mobility (~5–8 min)</div>'+fullTable(MOBILITY)
+      +'<div class="ref-note">Sunday: extend to 10–15 minutes.</div>';
+  }
+
+  document.querySelectorAll(".tab").forEach(function(t){
+    t.addEventListener("click", function(){
+      document.querySelectorAll(".tab").forEach(function(x){x.classList.remove("active");});
+      document.querySelectorAll(".page").forEach(function(x){x.classList.remove("active");});
+      t.classList.add("active");
+      document.getElementById("page-"+t.getAttribute("data-page")).classList.add("active");
+      window.scrollTo(0,0);
+    });
+  });
+
+  function renderAll(){
+    try{ renderHeader(); }catch(e){ console.error(e); }
+    try{ renderMeals(); }catch(e){ console.error(e); }
+    try{ renderWater(); }catch(e){ console.error(e); }
+    try{ renderMovement(); }catch(e){ console.error(e); }
+    try{ renderSummary(); }catch(e){ console.error(e); }
+    try{ renderWeight(); }catch(e){ console.error(e); }
+  }
+
+  /* draw immediately with defaults so the page is never blank */
+  if(!state.startDate) state.startDate = todayKey();
+  buildPlan();
+  renderAll();
+
+  /* then hydrate from whatever storage is available and redraw */
+  load().then(function(){
+    renderAll();
+    save();
+    if(!persisted) toast("Heads up: progress can't be saved in this browser");
+  }).catch(function(e){
+    console.error(e);
+  });
+
+  /* refresh at midnight rollover if left open */
+  setInterval(()=>{
+    if(!document.hidden){
+      const k=todayKey();
+      if(!state.days[k]){ renderHeader(); renderMeals(); renderWater(); renderMovement(); renderSummary(); }
+    }
+  }, 60000);
+
+  /* PWA: register service worker when served over http(s) */
+  if("serviceWorker" in navigator && location.protocol.indexOf("http")===0){
+    window.addEventListener("load", function(){
+      navigator.serviceWorker.register("sw.js").catch(function(e){ console.warn("SW registration failed", e); });
+    });
+  }
+})();
+</script>
+</body>
+</html>
