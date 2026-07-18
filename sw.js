@@ -1,5 +1,5 @@
 /* Mission 68 service worker — offline-first app shell */
-const CACHE = "mission68-v1";
+const CACHE = "mission68-v2";
 const SHELL = [
   "./",
   "./index.html",

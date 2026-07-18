@@ -1,28 +1,29 @@
-# Mission 68 — install as an app
+# Mission 68 — v2 (Editorial Ledger)
 
-One-time setup (~5 minutes), then it lives on your phone like any app.
+## Updating from v1 (already installed)
 
-## Deploy on GitHub Pages (free)
+1. In the `mission68` repo, replace **all six files** with the v2 versions:
+   `index.html`, `sw.js`, `manifest.webmanifest`, `icon-192.png`, `icon-512.png`, `icon-maskable.png`.
+2. Commit. The service worker cache is already bumped to `mission68-v2` — the
+   installed app picks up the new version on its next open (open, close fully, open again).
+3. Your existing data carries over untouched: every day you've logged since day 1
+   is already in the Archive, and your weigh-ins feed the new Tracker chart.
 
-1. Go to github.com → New repository → name it `mission68` → Public → Create.
-2. Click "uploading an existing file" and upload ALL files from this folder:
-   `index.html`, `manifest.webmanifest`, `sw.js`, `icon-192.png`, `icon-512.png`, `icon-maskable.png`.
-   Commit.
-3. Repo → Settings → Pages → Source: "Deploy from a branch" → Branch: `main`, folder `/ (root)` → Save.
-4. Wait ~1 minute. Your app is live at:
-   `https://<your-username>.github.io/mission68/`
+## New in v2
 
-## Install on your phone
+- **Tracker tab** — full weight chart with 5-kg milestone marks, last-7-days
+  compliance strip, 7-day averages, strength log, day-by-day Archive.
+- **Archive** — tap any past day for its complete page: meals, off-plan food,
+  water, movement, weigh-in, note.
+- **Editable loads** — tap any load on the Exercise page (or in the Strength log)
+  to update it; every change is date-stamped for progression tracking.
+- **Off the plan** — log any indulgence with its calories (and protein);
+  it counts into the day's bars and the archive.
+- **Backup** — Tracker → Data & settings → Export/Import JSON.
+- **Daily note, rest timer (60/90 s), weigh-in reminder, watch-form links,
+  adjustable targets**, and a full redesign.
 
-1. Open that URL in **Chrome** on your phone.
-2. Chrome menu (⋮) → **"Add to Home screen"** → **Install**.
-3. A "Mission 68" icon appears. It opens full-screen, no browser bar, and works offline after the first load.
+## Fresh install
 
-## Notes
-
-- Your data (ticks, streaks, weigh-ins) is stored on the phone itself, per-app.
-  It survives phone restarts. It does NOT sync between devices.
-- Day 1 = the first day you open the installed app. Install it on your real start day,
-  or clear the app's site data in Chrome before starting for real.
-- To update the app later: replace `index.html` in the repo and bump the
-  cache name in `sw.js` (e.g. `mission68-v2`). The app refreshes on next open.
+Same as v1: deploy the six files to GitHub Pages, open the URL in Chrome on
+the phone, menu → "Add to Home screen".
