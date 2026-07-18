@@ -1,0 +1,16 @@
+{
+  "name": "Mission 68 — Daily Ledger",
+  "short_name": "Mission 68",
+  "description": "Daily diet, movement and weight ledger: 87 to 68 kg.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F7F2E6",
+  "theme_color": "#F7F2E6",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
