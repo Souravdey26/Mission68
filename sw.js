@@ -1,55 +1,75 @@
-const CACHE = "mission68-v5-6";
-const SHELL = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
+/* Standard — service worker
+   Bump CACHE on every deploy. That is the only line you must change. */
+const CACHE = 'standard-v1';
 
-self.addEventListener("install", e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+const ASSETS = [
+  './',
+  './index.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
+  './icon-maskable-512.png'
+];
+
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE)
+      .then(c => c.addAll(ASSETS))
+      .catch(() => null)
+  );
+  // Do NOT skipWaiting: never swap the app out from under a running instance.
+  // The new version activates once every tab is closed.
 });
 
-self.addEventListener("activate", e => {
+self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then(keys => Promise.all(
+        keys.filter(k => k !== CACHE).map(k => caches.delete(k))
+      ))
+      .then(() => self.clients.claim())
   );
 });
 
-self.addEventListener("fetch", e => {
-  const url = new URL(e.request.url);
+self.addEventListener('fetch', e => {
+  const req = e.request;
+  if (req.method !== 'GET') return;
 
-  // Google Fonts: cache at runtime so the typeface works offline after first load
-  if (url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com") {
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;
+
+  // App shell (navigations and index.html): network first, cache fallback.
+  // Online you always get the current build; offline you get the last good one.
+  const isShell = req.mode === 'navigate' || url.pathname.endsWith('/index.html');
+
+  if (isShell) {
     e.respondWith(
-      caches.match(e.request).then(hit => hit ||
-        fetch(e.request).then(res => {
+      fetch(req)
+        .then(res => {
           const copy = res.clone();
-          caches.open(CACHE).then(c => c.put(e.request, copy));
+          caches.open(CACHE).then(c => c.put('./index.html', copy)).catch(() => {});
           return res;
-        }).catch(() => hit)
-      )
+        })
+        .catch(() =>
+          caches.match('./index.html').then(r => r || caches.match('./'))
+        )
     );
     return;
   }
 
-  if (url.origin !== location.origin) return;
-
-  // App shell: cache first, refresh in background
+  // Everything else (icons, manifest): cache first.
   e.respondWith(
-    caches.match(e.request).then(hit => {
-      const net = fetch(e.request).then(res => {
-        if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); }
+    caches.match(req).then(hit =>
+      hit || fetch(req).then(res => {
+        const copy = res.clone();
+        caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
         return res;
-      }).catch(() => hit);
-      return hit || net;
-    })
+      }).catch(() => hit)
+    )
   );
 });
 
-self.addEventListener("notificationclick", e => {
-  e.notification.close();
-  e.waitUntil(
-    clients.matchAll({ type: "window", includeUncontrolled: true }).then(list => {
-      for (const c of list) { if ("focus" in c) return c.focus(); }
-      return clients.openWindow("./");
-    })
-  );
+// Allow the page to force an update when you deploy a new build.
+self.addEventListener('message', e => {
+  if (e.data === 'skipWaiting') self.skipWaiting();
 });
